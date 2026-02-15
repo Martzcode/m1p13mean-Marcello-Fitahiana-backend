@@ -2,8 +2,11 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/mean_project');
+    const conn = await mongoose.connect(
+      process.env.MONGODB_URI || 'mongodb://centrecommercial:MotDePasseFort123@localhost:27017/centrecommercial?authSource=admin'
+    );
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log(`Database: ${conn.connection.name}`);
   } catch (error) {
     console.error(`Error: ${error.message}`);
     process.exit(1);
