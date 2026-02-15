@@ -29,6 +29,10 @@ router.get('/:id/historique', protect, authorize('administrateur'), getBoutiqueH
 router.get('/:id/paiements', protect, authorize('administrateur'), getBoutiquePaiements);
 router.get('/:id/occupants', protect, authorize('administrateur'), getBoutiqueOccupants);
 
+// Produits et commandes routes
+router.get('/:boutiqueId/produits', getProduitsByBoutique);
+router.get('/:boutiqueId/commandes', protect, authorize('commercant', 'administrateur'), getCommandesBoutique);
+
 router.route('/:id')
   .get(getBoutique)
   .put(protect, authorize('administrateur'), updateBoutique)
