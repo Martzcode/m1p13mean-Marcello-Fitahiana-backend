@@ -14,6 +14,9 @@ const {
   getBoutiqueOccupants
 } = require('../controllers/historiqueController');
 
+const { getProduitsByBoutique } = require('../controllers/produitController');
+const { getCommandesBoutique } = require('../controllers/commandeController');
+
 const router = express.Router();
 
 const { protect, authorize } = require('../middleware/auth');
