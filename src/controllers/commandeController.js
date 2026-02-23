@@ -178,7 +178,7 @@ exports.getCommande = async (req, res) => {
 
     // Vérifier les permissions
     const isClient = commande.client._id.toString() === req.user._id.toString();
-    const isCommercant = req.user.role === 'commercant'; // TODO: Vérifier ownership boutique
+    const isCommercant = req.user.role === 'commerçant';
     const isAdmin = req.user.role === 'administrateur';
 
     if (!isClient && !isCommercant && !isAdmin) {
@@ -242,7 +242,7 @@ exports.changerStatut = async (req, res) => {
   try {
     const { statut } = req.body;
 
-    const statutsValides = ['nouvelle', 'confirmee', 'en_preparation', 'prete', 'livree', 'annulee'];
+    const statutsValides = ['nouvelle', 'en_cours', 'terminee', 'livree'];
     if (!statut || !statutsValides.includes(statut)) {
       return res.status(400).json({
         success: false,

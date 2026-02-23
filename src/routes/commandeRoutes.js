@@ -22,8 +22,8 @@ router.get('/admin/all', protect, authorize('administrateur'), getAllCommandes);
 router.get('/:id', protect, getCommande);
 
 // Routes commerçant/admin
-router.patch('/:id/statut', protect, authorize('commercant', 'administrateur'), changerStatut);
-router.patch('/:id/paiement', protect, authorize('commercant', 'administrateur'), marquerPayee);
+router.patch('/:id/statut', protect, authorize('commerçant', 'administrateur'), changerStatut);
+router.patch('/:id/paiement', protect, authorize('commerçant', 'administrateur'), marquerPayee);
 
 module.exports = router;
 

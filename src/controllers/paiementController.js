@@ -179,6 +179,30 @@ exports.deletePaiement = async (req, res) => {
   }
 };
 
+// @desc    Get mois payés pour un loyer et une année
+// @route   GET /api/v1/paiements/loyer/:loyerId/mois-payes
+// @access  Private/Admin
+exports.getMoisPayes = async (req, res) => {
+  try {
+    const { loyerId } = req.params;
+    const annee = parseInt(req.query.annee) || new Date().getFullYear();
+
+    const paiements = await Paiement.find({ loyer: loyerId, annee });
+
+    const moisPayes = paiements.map(p => p.mois);
+
+    res.status(200).json({
+      success: true,
+      data: moisPayes
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
 // @desc    Get paiements by commercant
 // @route   GET /api/v1/paiements/commercant/:commercantId
 // @access  Private/Admin

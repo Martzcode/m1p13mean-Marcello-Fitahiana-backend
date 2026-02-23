@@ -17,11 +17,11 @@ router.get('/', getProduits);
 router.get('/:id', getProduit);
 
 // Routes protégées (Commerçant + Admin)
-router.post('/', protect, authorize('commercant', 'administrateur'), createProduit);
-router.put('/:id', protect, authorize('commercant', 'administrateur'), updateProduit);
-router.delete('/:id', protect, authorize('commercant', 'administrateur'), deleteProduit);
-router.patch('/:id/toggle-actif', protect, authorize('commercant', 'administrateur'), toggleActif);
-router.patch('/:id/stock', protect, authorize('commercant', 'administrateur'), updateStock);
+router.post('/', protect, authorize('commerçant', 'administrateur'), createProduit);
+router.put('/:id', protect, authorize('commerçant', 'administrateur'), updateProduit);
+router.delete('/:id', protect, authorize('commerçant', 'administrateur'), deleteProduit);
+router.patch('/:id/toggle-actif', protect, authorize('commerçant', 'administrateur'), toggleActif);
+router.patch('/:id/stock', protect, authorize('commerçant', 'administrateur'), updateStock);
 
 module.exports = router;
 

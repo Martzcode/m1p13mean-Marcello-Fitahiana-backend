@@ -133,7 +133,7 @@ exports.createProduit = async (req, res) => {
     }
 
     // Vérifier que le commerçant est propriétaire de la boutique (sauf admin)
-    if (req.user.role === 'commercant') {
+    if (req.user.role === 'commerçant') {
       const isOwner = boutiqueExists.commercant &&
                      boutiqueExists.commercant.toString() === req.user._id.toString();
 
@@ -187,7 +187,7 @@ exports.updateProduit = async (req, res) => {
     }
 
     // Vérifier ownership (sauf admin)
-    if (req.user.role === 'commercant') {
+    if (req.user.role === 'commerçant') {
       const isOwner = produit.boutique.commercant &&
                      produit.boutique.commercant.toString() === req.user._id.toString();
 
@@ -236,7 +236,7 @@ exports.deleteProduit = async (req, res) => {
     }
 
     // Vérifier ownership (sauf admin)
-    if (req.user.role === 'commercant') {
+    if (req.user.role === 'commerçant') {
       const isOwner = produit.boutique.commercant &&
                      produit.boutique.commercant.toString() === req.user._id.toString();
 
@@ -278,7 +278,7 @@ exports.toggleActif = async (req, res) => {
     }
 
     // Vérifier ownership (sauf admin)
-    if (req.user.role === 'commercant') {
+    if (req.user.role === 'commerçant') {
       const isOwner = produit.boutique.commercant &&
                      produit.boutique.commercant.toString() === req.user._id.toString();
 
@@ -331,7 +331,7 @@ exports.updateStock = async (req, res) => {
     }
 
     // Vérifier ownership (sauf admin)
-    if (req.user.role === 'commercant') {
+    if (req.user.role === 'commerçant') {
       const isOwner = produit.boutique.commercant &&
                      produit.boutique.commercant.toString() === req.user._id.toString();
 

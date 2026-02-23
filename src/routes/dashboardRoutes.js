@@ -1,7 +1,8 @@
 const express = require('express');
 const {
   getDashboardStats,
-  getYearlyRevenue
+  getYearlyRevenue,
+  getMerchantDashboardStats
 } = require('../controllers/dashboardController');
 
 const router = express.Router();
@@ -9,10 +10,12 @@ const router = express.Router();
 const { protect, authorize } = require('../middleware/auth');
 
 router.use(protect);
-router.use(authorize('administrateur'));
 
-router.get('/stats', getDashboardStats);
-router.get('/revenue/:year', getYearlyRevenue);
+// Admin routes
+router.get('/stats', authorize('administrateur'), getDashboardStats);
+router.get('/revenue/:year', authorize('administrateur'), getYearlyRevenue);
+
+// Merchant routes
+router.get('/merchant/stats', authorize('commerçant'), getMerchantDashboardStats);
 
 module.exports = router;
-

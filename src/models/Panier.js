@@ -42,9 +42,8 @@ panierSchema.methods.calculateTotal = function() {
 };
 
 // Hook pre-save pour calculer montant total
-panierSchema.pre('save', function(next) {
+panierSchema.pre('save', function() {
   this.calculateTotal();
-  next();
 });
 
 module.exports = mongoose.model('Panier', panierSchema);

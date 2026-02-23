@@ -19,7 +19,7 @@ router.get('/impayes', authorize('administrateur'), getLoyersImpayes);
 router.get('/stats/monthly', authorize('administrateur'), getMonthlyLoyersStats);
 
 router.route('/')
-  .get(getLoyers)
+  .get(authorize('administrateur', 'commerçant'), getLoyers)
   .post(authorize('administrateur'), createLoyer);
 
 router.route('/:id')

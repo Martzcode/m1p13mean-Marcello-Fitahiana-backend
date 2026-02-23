@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const Boutique = require('../models/Boutique');
 
 // @desc    Get all users
 // @route   GET /api/v1/users
@@ -71,6 +70,24 @@ exports.createUser = async (req, res) => {
 // @access  Private/Admin
 exports.updateUser = async (req, res) => {
   try {
+    // Si un mot de passe est envoyé, utiliser save() pour déclencher le hash bcrypt
+    if (req.body.password) {
+      const user = await User.findById(req.params.id).select('+password');
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Utilisateur non trouvé'
+        });
+      }
+      Object.assign(user, req.body);
+      await user.save();
+      user.password = undefined;
+      return res.status(200).json({
+        success: true,
+        data: user
+      });
+    }
+
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
@@ -141,48 +158,4 @@ exports.getCommercants = async (req, res) => {
   }
 };
 
-// @desc    Assign boutique to commercant
-// @route   POST /api/v1/users/:userId/boutiques/:boutiqueId
-// @access  Private/Admin
-exports.assignBoutique = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.userId);
-    const boutique = await Boutique.findById(req.params.boutiqueId);
-
-    if (!user || !boutique) {
-      return res.status(404).json({
-        success: false,
-        message: 'Utilisateur ou boutique non trouvé'
-      });
-    }
-
-    if (user.role !== 'commerçant') {
-      return res.status(400).json({
-        success: false,
-        message: 'L\'utilisateur doit être un commerçant'
-      });
-    }
-
-    // Add boutique to user
-    if (!user.boutiques.includes(boutique._id)) {
-      user.boutiques.push(boutique._id);
-      await user.save();
-    }
-
-    // Update boutique
-    boutique.commercant = user._id;
-    boutique.statut = 'occupée';
-    await boutique.save();
-
-    res.status(200).json({
-      success: true,
-      data: user
-    });
-  } catch (err) {
-    res.status(400).json({
-      success: false,
-      message: err.message
-    });
-  }
-};
 
