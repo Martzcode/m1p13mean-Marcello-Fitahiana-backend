@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
@@ -20,6 +21,9 @@ app.use(morgan('dev')); // Logging
 app.use(express.json()); // Body parser
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Basic route for testing
 app.get('/', (req, res) => {
