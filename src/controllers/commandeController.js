@@ -11,7 +11,7 @@ exports.createCommande = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { modePaiement, notes } = req.body;
+    const { modePaiement, notes, items } = req.body;
 
     if (!modePaiement || !['livraison', 'en_ligne'].includes(modePaiement)) {
       await session.abortTransaction();
@@ -21,12 +21,7 @@ exports.createCommande = async (req, res) => {
       });
     }
 
-    // Récupérer le panier
-    const panier = await Panier.findOne({ client: req.user._id })
-      .populate('items.produit')
-      .session(session);
-
-    if (!panier || panier.items.length === 0) {
+    if (!items || items.length === 0) {
       await session.abortTransaction();
       return res.status(400).json({
         success: false,
@@ -34,39 +29,41 @@ exports.createCommande = async (req, res) => {
       });
     }
 
-    // Grouper les produits par boutique
+    // Récupérer et vérifier les produits depuis la BDD
     const commandesParBoutique = {};
 
-    for (const item of panier.items) {
-      if (!item.produit || !item.produit.actif) {
+    for (const item of items) {
+      const produit = await Produit.findById(item.produit).session(session);
+
+      if (!produit || !produit.actif) {
         await session.abortTransaction();
         return res.status(400).json({
           success: false,
-          message: `Le produit ${item.produit?.nom || 'inconnu'} n'est plus disponible`
+          message: `Le produit ${produit?.nom || 'inconnu'} n'est plus disponible`
         });
       }
 
       // Vérifier le stock
-      if (item.produit.stock < item.quantite) {
+      if (produit.stock < item.quantite) {
         await session.abortTransaction();
         return res.status(400).json({
           success: false,
-          message: `Stock insuffisant pour ${item.produit.nom}. Stock disponible: ${item.produit.stock}`
+          message: `Stock insuffisant pour ${produit.nom}. Stock disponible: ${produit.stock}`
         });
       }
 
-      const boutiqueId = item.produit.boutique.toString();
+      const boutiqueId = produit.boutique.toString();
 
       if (!commandesParBoutique[boutiqueId]) {
         commandesParBoutique[boutiqueId] = [];
       }
 
       commandesParBoutique[boutiqueId].push({
-        produit: item.produit._id,
-        nom: item.produit.nom,
-        prix: item.produit.prix, // Prix actuel du produit
+        produit: produit._id,
+        nom: produit.nom,
+        prix: produit.prix,
         quantite: item.quantite,
-        sousTotal: item.produit.prix * item.quantite
+        sousTotal: produit.prix * item.quantite
       });
     }
 
@@ -82,7 +79,7 @@ exports.createCommande = async (req, res) => {
         produits,
         montantTotal,
         modePaiement,
-        paye: modePaiement === 'en_ligne', // Si paiement en ligne, considéré payé
+        paye: modePaiement === 'en_ligne',
         notes
       }], { session });
 
@@ -97,11 +94,6 @@ exports.createCommande = async (req, res) => {
         );
       }
     }
-
-    // Vider le panier
-    panier.items = [];
-    panier.montantTotal = 0;
-    await panier.save({ session });
 
     await session.commitTransaction();
 

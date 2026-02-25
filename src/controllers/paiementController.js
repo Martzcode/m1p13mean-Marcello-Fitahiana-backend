@@ -13,6 +13,11 @@ exports.getPaiements = async (req, res) => {
       query.commercant = req.user.id;
     }
 
+    // Filter by loyer
+    if (req.query.loyer) {
+      query.loyer = req.query.loyer;
+    }
+
     // Filter by year
     if (req.query.annee) {
       query.annee = parseInt(req.query.annee);
