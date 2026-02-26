@@ -5,7 +5,8 @@ const {
   createBoutique,
   updateBoutique,
   deleteBoutique,
-  getBoutiquesStats
+  getBoutiquesStats,
+  updateMyBoutique
 } = require('../controllers/boutiqueController');
 
 const {
@@ -34,7 +35,10 @@ router.get('/:id/occupants', protect, authorize('administrateur'), getBoutiqueOc
 
 // Produits et commandes routes
 router.get('/:boutiqueId/produits', getProduitsByBoutique);
-router.get('/:boutiqueId/commandes', protect, authorize('commercant', 'administrateur'), getCommandesBoutique);
+router.get('/:boutiqueId/commandes', protect, authorize('commerçant', 'administrateur'), getCommandesBoutique);
+
+// Route merchant pour modifier sa propre boutique
+router.put('/:id/my', protect, authorize('commerçant'), updateMyBoutique);
 
 router.route('/:id')
   .get(getBoutique)

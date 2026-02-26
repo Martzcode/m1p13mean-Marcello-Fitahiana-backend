@@ -31,8 +31,8 @@ const paiementSchema = new mongoose.Schema({
   },
   methodePaiement: {
     type: String,
-    enum: ['espèces', 'carte', 'virement', 'chèque'],
-    default: 'espèces'
+    enum: ['especes', 'cheque', 'virement', 'carte'],
+    default: 'especes'
   },
   statut: {
     type: String,

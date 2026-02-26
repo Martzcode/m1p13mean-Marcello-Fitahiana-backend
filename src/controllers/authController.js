@@ -157,6 +157,38 @@ exports.updatePassword = async (req, res, next) => {
   }
 };
 
+// @desc    Upload user photo
+// @route   PUT /api/v1/auth/uploadphoto
+// @access  Private
+exports.uploadPhoto = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Veuillez sélectionner une photo'
+      });
+    }
+
+    const photoPath = req.file.filename;
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { photo: photoPath },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
 // @desc    Logout user / clear cookie
 // @route   GET /api/v1/auth/logout
 // @access  Private

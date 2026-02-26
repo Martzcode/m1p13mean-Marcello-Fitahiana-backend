@@ -156,6 +156,54 @@ exports.deleteBoutique = async (req, res) => {
   }
 };
 
+// @desc    Update my boutique (merchant only)
+// @route   PUT /api/v1/boutiques/:id/my
+// @access  Private/Commerçant
+exports.updateMyBoutique = async (req, res) => {
+  try {
+    const boutique = await Boutique.findById(req.params.id);
+
+    if (!boutique) {
+      return res.status(404).json({
+        success: false,
+        message: 'Boutique non trouvée'
+      });
+    }
+
+    // Vérifier que le commerçant est propriétaire
+    if (!boutique.commercant || boutique.commercant.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Vous n\'êtes pas autorisé à modifier cette boutique'
+      });
+    }
+
+    // Seuls ces champs sont modifiables par le commerçant
+    const allowedFields = ['nom', 'categorie', 'description', 'horaires', 'images', 'telephone', 'email'];
+    const updates = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
+
+    const updatedBoutique = await Boutique.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+      runValidators: true
+    }).populate('zone').populate('commercant', 'nom prenom email');
+
+    res.status(200).json({
+      success: true,
+      data: updatedBoutique
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
 // @desc    Get boutiques statistics
 // @route   GET /api/v1/boutiques/stats
 // @access  Private/Admin

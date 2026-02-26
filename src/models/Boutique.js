@@ -36,6 +36,16 @@ const boutiqueSchema = new mongoose.Schema({
   description: String,
   telephone: String,
   email: String,
+  horaires: {
+    lundi: { ouverture: String, fermeture: String },
+    mardi: { ouverture: String, fermeture: String },
+    mercredi: { ouverture: String, fermeture: String },
+    jeudi: { ouverture: String, fermeture: String },
+    vendredi: { ouverture: String, fermeture: String },
+    samedi: { ouverture: String, fermeture: String },
+    dimanche: { ouverture: String, fermeture: String }
+  },
+  images: [String],
   actif: {
     type: Boolean,
     default: true

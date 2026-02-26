@@ -5,8 +5,7 @@ const {
   createUser,
   updateUser,
   deleteUser,
-  getCommercants,
-  assignBoutique
+  getCommercants
 } = require('../controllers/userController');
 
 const router = express.Router();
@@ -26,8 +25,6 @@ router.route('/:id')
   .get(getUser)
   .put(updateUser)
   .delete(deleteUser);
-
-router.post('/:userId/boutiques/:boutiqueId', assignBoutique);
 
 module.exports = router;
 

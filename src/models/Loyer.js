@@ -17,7 +17,7 @@ const loyerSchema = new mongoose.Schema({
   },
   periodicite: {
     type: String,
-    enum: ['mensuel', 'trimestriel', 'annuel'],
+    enum: ['mensuel'],
     default: 'mensuel'
   },
   dateDebut: {

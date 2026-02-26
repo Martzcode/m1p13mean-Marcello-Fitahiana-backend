@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
@@ -21,6 +22,9 @@ app.use(express.json()); // Body parser
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
 // Basic route for testing
 app.get('/', (req, res) => {
     res.json({
@@ -37,8 +41,6 @@ app.use('/api/v1/zones', require('./routes/zoneRoutes'));
 app.use('/api/v1/boutiques', require('./routes/boutiqueRoutes'));
 app.use('/api/v1/loyers', require('./routes/loyerRoutes'));
 app.use('/api/v1/paiements', require('./routes/paiementRoutes'));
-app.use('/api/v1/employes', require('./routes/employeRoutes'));
-app.use('/api/v1/tasks', require('./routes/taskRoutes'));
 app.use('/api/v1/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/v1/produits', require('./routes/produitRoutes'));
 app.use('/api/v1/panier', require('./routes/panierRoutes'));

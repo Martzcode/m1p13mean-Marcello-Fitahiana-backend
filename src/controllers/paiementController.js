@@ -13,6 +13,11 @@ exports.getPaiements = async (req, res) => {
       query.commercant = req.user.id;
     }
 
+    // Filter by loyer
+    if (req.query.loyer) {
+      query.loyer = req.query.loyer;
+    }
+
     // Filter by year
     if (req.query.annee) {
       query.annee = parseInt(req.query.annee);
@@ -170,6 +175,30 @@ exports.deletePaiement = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {}
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+// @desc    Get mois payés pour un loyer et une année
+// @route   GET /api/v1/paiements/loyer/:loyerId/mois-payes
+// @access  Private/Admin
+exports.getMoisPayes = async (req, res) => {
+  try {
+    const { loyerId } = req.params;
+    const annee = parseInt(req.query.annee) || new Date().getFullYear();
+
+    const paiements = await Paiement.find({ loyer: loyerId, annee });
+
+    const moisPayes = paiements.map(p => p.mois);
+
+    res.status(200).json({
+      success: true,
+      data: moisPayes
     });
   } catch (err) {
     res.status(500).json({

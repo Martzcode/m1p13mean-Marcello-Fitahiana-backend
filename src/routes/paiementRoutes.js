@@ -5,7 +5,8 @@ const {
   createPaiement,
   updatePaiement,
   deletePaiement,
-  getPaiementsByCommercant
+  getPaiementsByCommercant,
+  getMoisPayes
 } = require('../controllers/paiementController');
 
 const router = express.Router();
@@ -14,6 +15,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 router.use(protect);
 
+router.get('/loyer/:loyerId/mois-payes', authorize('administrateur'), getMoisPayes);
 router.get('/commercant/:commercantId', authorize('administrateur'), getPaiementsByCommercant);
 
 router.route('/')

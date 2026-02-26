@@ -6,14 +6,26 @@ const Zone = require('./src/models/Zone');
 const Boutique = require('./src/models/Boutique');
 const Loyer = require('./src/models/Loyer');
 const Paiement = require('./src/models/Paiement');
-const Employe = require('./src/models/Employe');
+const Produit = require('./src/models/Produit');
+const Commande = require('./src/models/Commande');
+const Panier = require('./src/models/Panier');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://centrecommercial:MotDePasseFort123@localhost:27017/centrecommercial?authSource=admin';
+
+const defaultHoraires = {
+  lundi: { ouverture: '09:00', fermeture: '19:00' },
+  mardi: { ouverture: '09:00', fermeture: '19:00' },
+  mercredi: { ouverture: '09:00', fermeture: '19:00' },
+  jeudi: { ouverture: '09:00', fermeture: '19:00' },
+  vendredi: { ouverture: '09:00', fermeture: '19:00' },
+  samedi: { ouverture: '10:00', fermeture: '20:00' },
+  dimanche: { ouverture: '10:00', fermeture: '17:00' }
+};
 
 async function seedDatabase() {
   try {
     await mongoose.connect(MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Nettoyer les données existantes
     await Promise.all([
@@ -23,9 +35,11 @@ async function seedDatabase() {
       Boutique.deleteMany({}),
       Loyer.deleteMany({}),
       Paiement.deleteMany({}),
-      Employe.deleteMany({})
+      Produit.deleteMany({}),
+      Commande.deleteMany({}),
+      Panier.deleteMany({})
     ]);
-    console.log('🗑️  Cleared existing data');
+    console.log('Cleared existing data');
 
     // ========== UTILISATEURS ==========
     const admin = await User.create({
@@ -37,7 +51,6 @@ async function seedDatabase() {
       telephone: '+261 34 00 000 00',
       actif: true
     });
-    console.log('✅ Admin créé');
 
     const commercants = await User.create([
       { nom: 'Rakoto', prenom: 'Jean', email: 'jean.rakoto@centre.mg', password: 'password123', role: 'commerçant', telephone: '+261 34 11 111 11', actif: true },
@@ -45,9 +58,8 @@ async function seedDatabase() {
       { nom: 'Andriam', prenom: 'Paul', email: 'paul.andriam@centre.mg', password: 'password123', role: 'commerçant', telephone: '+261 34 33 333 33', actif: true },
       { nom: 'Ranaivo', prenom: 'Sophie', email: 'sophie.ranaivo@centre.mg', password: 'password123', role: 'commerçant', telephone: '+261 34 44 444 44', actif: true },
       { nom: 'Raharison', prenom: 'Lucas', email: 'lucas.raharison@centre.mg', password: 'password123', role: 'commerçant', telephone: '+261 34 55 555 55', actif: true },
-      { nom: 'Rakoto', prenom: 'Feno', email: 'feno.rakoto@centre.mg', password: 'password123', role: 'commerçant', telephone: '+261 34 66 666 66', actif: false } // Résilié
+      { nom: 'Rakoto', prenom: 'Feno', email: 'feno.rakoto@centre.mg', password: 'password123', role: 'commerçant', telephone: '+261 34 66 666 66', actif: false }
     ]);
-    console.log(`✅ ${commercants.length} commerçants créés`);
 
     const client = await User.create({
       nom: 'Razafindrakoto',
@@ -58,13 +70,13 @@ async function seedDatabase() {
       telephone: '+261 34 77 777 77',
       actif: true
     });
-    console.log('✅ Client créé');
+    console.log('Users created');
 
     // ========== CENTRE COMMERCIAL ==========
-    const centre = await CentreCommercial.create({
+    await CentreCommercial.create({
       nom: 'Centre Commercial Ankorondrano',
       adresse: {
-        rue: 'Avenue de l\'Indépendance',
+        rue: 'Avenue de l\'Independance',
         ville: 'Antananarivo',
         codePostal: '101',
         pays: 'Madagascar'
@@ -82,47 +94,77 @@ async function seedDatabase() {
       email: 'contact@centre-ankorondrano.mg',
       telephone: '+261 20 22 000 00'
     });
-    console.log('✅ Centre Commercial créé');
 
     // ========== ZONES ==========
     const zones = await Zone.create([
-      { nom: 'Zone A - Rez-de-chaussée', description: 'Zone principale du rez-de-chaussée', etage: 0, superficie: 1500 },
-      { nom: 'Zone B - Premier étage', description: 'Zone du premier étage', etage: 1, superficie: 1200 },
-      { nom: 'Zone C - Deuxième étage', description: 'Zone du deuxième étage', etage: 2, superficie: 800 }
+      { nom: 'Zone A - Rez-de-chaussee', description: 'Zone principale du rez-de-chaussee', etage: 0, superficie: 1500 },
+      { nom: 'Zone B - Premier etage', description: 'Zone du premier etage', etage: 1, superficie: 1200 },
+      { nom: 'Zone C - Deuxieme etage', description: 'Zone du deuxieme etage', etage: 2, superficie: 800 }
     ]);
-    console.log(`✅ ${zones.length} zones créées`);
 
-    // ========== BOUTIQUES ==========
+    // ========== BOUTIQUES (avec horaires et images) ==========
     const boutiques = await Boutique.create([
-      // BOUTIQUES OCCUPÉES - BIEN PAYÉES
-      { numero: 'A-001', nom: 'Fashion Store', categorie: 'Mode', surface: 80, zone: zones[0]._id, commercant: commercants[0]._id, statut: 'occupée', description: 'Boutique de vêtements tendance', telephone: '+261 34 11 111 11', email: 'fashion@centre.mg', actif: true },
-      { numero: 'A-002', nom: 'Cosmétique Paradis', categorie: 'Cosmétique', surface: 60, zone: zones[0]._id, commercant: commercants[1]._id, statut: 'occupée', description: 'Produits de beauté', telephone: '+261 34 22 222 22', email: 'cosmetique@centre.mg', actif: true },
-      { numero: 'B-001', nom: 'Tech World', categorie: 'Électronique', surface: 100, zone: zones[1]._id, commercant: commercants[2]._id, statut: 'occupée', description: 'Électronique et high-tech', telephone: '+261 34 33 333 33', email: 'tech@centre.mg', actif: true },
-      { numero: 'A-005', nom: 'Alimentation Bio', categorie: 'Alimentation', surface: 70, zone: zones[0]._id, commercant: commercants[0]._id, statut: 'occupée', description: 'Produits bio', telephone: '+261 34 11 111 11', email: 'bio@centre.mg', actif: true },
-
-      // BOUTIQUES AVEC RETARDS
-      { numero: 'B-002', nom: 'Restaurant Le Bon Goût', categorie: 'Restauration', surface: 120, zone: zones[1]._id, commercant: commercants[3]._id, statut: 'occupée', description: 'Restaurant gastronomique', telephone: '+261 34 44 444 44', email: 'restaurant@centre.mg', actif: true },
-      { numero: 'A-003', nom: 'Sport Plus', categorie: 'Sport', surface: 90, zone: zones[0]._id, commercant: commercants[4]._id, statut: 'occupée', description: 'Articles de sport', telephone: '+261 34 55 555 55', email: 'sport@centre.mg', actif: true },
-
-      // BOUTIQUE RÉSILIÉE
-      { numero: 'C-001', nom: 'Librairie Ancienne', categorie: 'Librairie', surface: 50, zone: zones[2]._id, commercant: commercants[5]._id, statut: 'libre', description: 'Ancien contrat résilié', actif: false },
-
-      // BOUTIQUES LIBRES
+      { numero: 'A-001', nom: 'Fashion Store', categorie: 'Mode', surface: 80, zone: zones[0]._id, commercant: commercants[0]._id, statut: 'occupée', description: 'Boutique de vetements tendance', telephone: '+261 34 11 111 11', email: 'fashion@centre.mg', horaires: defaultHoraires, actif: true },
+      { numero: 'A-002', nom: 'Cosmetique Paradis', categorie: 'Cosmétique', surface: 60, zone: zones[0]._id, commercant: commercants[1]._id, statut: 'occupée', description: 'Produits de beaute', telephone: '+261 34 22 222 22', email: 'cosmetique@centre.mg', horaires: defaultHoraires, actif: true },
+      { numero: 'B-001', nom: 'Tech World', categorie: 'Électronique', surface: 100, zone: zones[1]._id, commercant: commercants[2]._id, statut: 'occupée', description: 'Electronique et high-tech', telephone: '+261 34 33 333 33', email: 'tech@centre.mg', horaires: defaultHoraires, actif: true },
+      { numero: 'A-005', nom: 'Alimentation Bio', categorie: 'Alimentation', surface: 70, zone: zones[0]._id, commercant: commercants[0]._id, statut: 'occupée', description: 'Produits bio et naturels', telephone: '+261 34 11 111 11', email: 'bio@centre.mg', horaires: defaultHoraires, actif: true },
+      { numero: 'B-002', nom: 'Restaurant Le Bon Gout', categorie: 'Restauration', surface: 120, zone: zones[1]._id, commercant: commercants[3]._id, statut: 'occupée', description: 'Restaurant gastronomique', telephone: '+261 34 44 444 44', email: 'restaurant@centre.mg', horaires: { ...defaultHoraires, dimanche: { ouverture: '11:00', fermeture: '15:00' } }, actif: true },
+      { numero: 'A-003', nom: 'Sport Plus', categorie: 'Sport', surface: 90, zone: zones[0]._id, commercant: commercants[4]._id, statut: 'occupée', description: 'Articles de sport', telephone: '+261 34 55 555 55', email: 'sport@centre.mg', horaires: defaultHoraires, actif: true },
+      { numero: 'C-001', nom: 'Librairie Ancienne', categorie: 'Librairie', surface: 50, zone: zones[2]._id, commercant: commercants[5]._id, statut: 'libre', description: 'Ancien contrat resilie', actif: false },
       { numero: 'A-004', nom: 'Boutique A-004', categorie: 'Autre', surface: 65, zone: zones[0]._id, statut: 'libre', actif: true },
       { numero: 'B-003', nom: 'Boutique B-003', categorie: 'Autre', surface: 75, zone: zones[1]._id, statut: 'libre', actif: true },
       { numero: 'C-002', nom: 'Boutique C-002', categorie: 'Autre', surface: 55, zone: zones[2]._id, statut: 'libre', actif: true }
     ]);
-    console.log(`✅ ${boutiques.length} boutiques créées (7 occupées, 3 libres)`);
+    console.log(`${boutiques.length} boutiques created`);
+
+    // Associer boutiques aux commercants
+    await User.findByIdAndUpdate(commercants[0]._id, { boutiques: [boutiques[0]._id, boutiques[3]._id] });
+    await User.findByIdAndUpdate(commercants[1]._id, { boutiques: [boutiques[1]._id] });
+    await User.findByIdAndUpdate(commercants[2]._id, { boutiques: [boutiques[2]._id] });
+    await User.findByIdAndUpdate(commercants[3]._id, { boutiques: [boutiques[4]._id] });
+    await User.findByIdAndUpdate(commercants[4]._id, { boutiques: [boutiques[5]._id] });
+
+    // ========== PRODUITS (20+ produits) ==========
+    const produits = await Produit.create([
+      // Fashion Store (commercant 0)
+      { nom: 'T-shirt Premium', description: 'T-shirt en coton bio', prix: 45000, stock: 50, categorie: 'Vêtements', boutique: boutiques[0]._id, actif: true },
+      { nom: 'Jean Slim', description: 'Jean slim fit homme', prix: 85000, stock: 30, categorie: 'Vêtements', boutique: boutiques[0]._id, actif: true },
+      { nom: 'Robe d\'ete', description: 'Robe legere pour l\'ete', prix: 65000, stock: 20, categorie: 'Vêtements', boutique: boutiques[0]._id, actif: true },
+      { nom: 'Veste en cuir', description: 'Veste en cuir synthetique', prix: 150000, stock: 10, categorie: 'Vêtements', boutique: boutiques[0]._id, actif: true },
+      // Cosmetique Paradis (commercant 1)
+      { nom: 'Creme hydratante', description: 'Creme pour visage', prix: 35000, stock: 40, categorie: 'Beauté', boutique: boutiques[1]._id, actif: true },
+      { nom: 'Parfum Floral', description: 'Eau de parfum 50ml', prix: 120000, stock: 15, categorie: 'Beauté', boutique: boutiques[1]._id, actif: true },
+      { nom: 'Kit Maquillage', description: 'Kit complet de maquillage', prix: 95000, stock: 25, categorie: 'Beauté', boutique: boutiques[1]._id, actif: true },
+      // Tech World (commercant 2)
+      { nom: 'Ecouteurs Bluetooth', description: 'Ecouteurs sans fil', prix: 75000, stock: 60, categorie: 'Électronique', boutique: boutiques[2]._id, actif: true },
+      { nom: 'Chargeur rapide', description: 'Chargeur USB-C 65W', prix: 45000, stock: 100, categorie: 'Électronique', boutique: boutiques[2]._id, actif: true },
+      { nom: 'Coque telephone', description: 'Coque de protection', prix: 15000, stock: 200, categorie: 'Électronique', boutique: boutiques[2]._id, actif: true },
+      { nom: 'Souris sans fil', description: 'Souris ergonomique', prix: 55000, stock: 35, categorie: 'Électronique', boutique: boutiques[2]._id, actif: true },
+      { nom: 'Clavier mecanique', description: 'Clavier gaming RGB', prix: 180000, stock: 8, categorie: 'Électronique', boutique: boutiques[2]._id, actif: true },
+      // Alimentation Bio (commercant 0)
+      { nom: 'Miel bio', description: 'Miel 100% naturel 500g', prix: 25000, stock: 30, categorie: 'Alimentation', boutique: boutiques[3]._id, actif: true },
+      { nom: 'Huile d\'olive', description: 'Huile d\'olive extra vierge', prix: 35000, stock: 20, categorie: 'Alimentation', boutique: boutiques[3]._id, actif: true },
+      { nom: 'The vert bio', description: 'The vert en vrac 200g', prix: 18000, stock: 50, categorie: 'Alimentation', boutique: boutiques[3]._id, actif: true },
+      // Sport Plus (commercant 4)
+      { nom: 'Ballon de foot', description: 'Ballon officiel taille 5', prix: 45000, stock: 25, categorie: 'Sport', boutique: boutiques[5]._id, actif: true },
+      { nom: 'Tapis de yoga', description: 'Tapis antiderapant 6mm', prix: 55000, stock: 15, categorie: 'Sport', boutique: boutiques[5]._id, actif: true },
+      { nom: 'Halteres 5kg', description: 'Paire d\'halteres 5kg', prix: 70000, stock: 12, categorie: 'Sport', boutique: boutiques[5]._id, actif: true },
+      { nom: 'Chaussures running', description: 'Chaussures de course legeres', prix: 135000, stock: 0, categorie: 'Sport', boutique: boutiques[5]._id, actif: true },
+      { nom: 'Gourde isotherme', description: 'Gourde 750ml inox', prix: 28000, stock: 40, categorie: 'Sport', boutique: boutiques[5]._id, actif: true },
+      // Produit inactif
+      { nom: 'Ancien produit', description: 'Produit retire de la vente', prix: 10000, stock: 5, categorie: 'Autre', boutique: boutiques[0]._id, actif: false }
+    ]);
+    console.log(`${produits.length} produits created`);
 
     // ========== LOYERS ==========
     const loyers = [];
 
-    // Loyers BIEN PAYÉS (4 boutiques)
+    // Loyers BIEN PAYES (4 boutiques)
     for (let i = 0; i < 4; i++) {
       loyers.push({
         boutique: boutiques[i]._id,
         commercant: boutiques[i].commercant,
-        montant: (i + 1) * 200000, // 200k, 400k, 600k, 800k
+        montant: (i + 1) * 200000,
         periodicite: 'mensuel',
         dateDebut: new Date(2024, 0, 1),
         dateFin: new Date(2026, 11, 31),
@@ -152,7 +194,7 @@ async function seedDatabase() {
       statut: 'actif'
     });
 
-    // Loyer RÉSILIÉ
+    // Loyer RESILIE
     loyers.push({
       boutique: boutiques[6]._id,
       commercant: boutiques[6].commercant,
@@ -164,17 +206,15 @@ async function seedDatabase() {
     });
 
     const loyersCreated = await Loyer.create(loyers);
-    console.log(`✅ ${loyersCreated.length} loyers créés`);
+    console.log(`${loyersCreated.length} loyers created`);
 
-    // ========== PAIEMENTS (HISTORIQUE ENRICHI) ==========
+    // ========== PAIEMENTS ==========
     const paiements = [];
-    const today = new Date(2026, 1, 8); // 8 février 2026
+    const today = new Date(2026, 1, 8);
 
-    // Fonction helper pour créer un paiement
     const createPaiement = (loyer, moisOffset, statut = 'payé') => {
       const targetDate = new Date(today);
       targetDate.setMonth(today.getMonth() + moisOffset);
-
       return {
         loyer: loyer._id,
         commercant: loyer.commercant,
@@ -188,90 +228,55 @@ async function seedDatabase() {
       };
     };
 
-    // SCÉNARIO 1: Boutiques BIEN PAYÉES (4 boutiques) - Payé jusqu'à aujourd'hui + 3 mois d'avance
-    // Fashion Store (200k), Cosmétique (400k), Tech World (600k), Alimentation Bio (800k)
+    // Boutiques bien payees
     for (let i = 0; i < 4; i++) {
       const loyer = loyersCreated[i];
-
-      // -3 mois à aujourd'hui (4 mois)
       for (let offset = -3; offset <= 0; offset++) {
         paiements.push(createPaiement(loyer, offset, 'payé'));
       }
-
-      // PAYEURS EN AVANCE: +1, +2, +3 mois déjà payés
-      if (i < 2) { // Fashion Store et Cosmétique payent en avance
+      if (i < 2) {
         for (let offset = 1; offset <= 3; offset++) {
           paiements.push(createPaiement(loyer, offset, 'payé'));
         }
       }
     }
 
-    // SCÉNARIO 2: Restaurant - EN RETARD 2 MOIS (décembre 2025 et janvier 2026 NON payés)
+    // Restaurant - EN RETARD 2 MOIS
     const loyerRestaurant = loyersCreated[4];
-
-    // Payé jusqu'à novembre 2025
     for (let offset = -3; offset <= -2; offset++) {
       paiements.push(createPaiement(loyerRestaurant, offset, 'payé'));
     }
-    // Décembre 2025 et Janvier 2026 - IMPAYÉS (offset -1 et 0)
     paiements.push(createPaiement(loyerRestaurant, -1, 'impayé'));
     paiements.push(createPaiement(loyerRestaurant, 0, 'impayé'));
 
-    // SCÉNARIO 3: Sport Plus - EN RETARD 1 MOIS (janvier 2026 NON payé)
+    // Sport Plus - EN RETARD 1 MOIS
     const loyerSport = loyersCreated[5];
-
-    // Payé jusqu'à décembre 2025
     for (let offset = -3; offset <= -1; offset++) {
       paiements.push(createPaiement(loyerSport, offset, 'payé'));
     }
-    // Janvier 2026 - IMPAYÉ (offset 0)
     paiements.push(createPaiement(loyerSport, 0, 'impayé'));
 
-    // SCÉNARIO 4: Librairie RÉSILIÉE - Historique jusqu'à résiliation
+    // Librairie RESILIEE
     const loyerLibrairie = loyersCreated[6];
     for (let offset = -3; offset <= -2; offset++) {
       paiements.push(createPaiement(loyerLibrairie, offset, 'payé'));
     }
 
     await Paiement.create(paiements);
-    console.log(`✅ ${paiements.length} paiements créés (6 mois: -3 à +3)`);
+    console.log(`${paiements.length} paiements created`);
 
-    // ========== EMPLOYÉS ==========
-    const employes = await Employe.create([
-      { nom: 'Rasoa', prenom: 'Hery', fonction: 'Agent de sécurité', email: 'hery.rasoa@centre.mg', telephone: '+261 34 88 888 88', dateEmbauche: new Date(2023, 0, 15), salaire: 800000, actif: true },
-      { nom: 'Randria', prenom: 'Nivo', fonction: 'Agent d\'entretien', email: 'nivo.randria@centre.mg', telephone: '+261 34 99 999 99', dateEmbauche: new Date(2023, 5, 1), salaire: 600000, actif: true },
-      { nom: 'Rafidy', prenom: 'Soa', fonction: 'Réceptionniste', email: 'soa.rafidy@centre.mg', telephone: '+261 34 00 000 11', dateEmbauche: new Date(2024, 2, 10), salaire: 700000, actif: true }
-    ]);
-    console.log(`✅ ${employes.length} employés créés`);
-
-    console.log('\n🎉 Database seeding completed!');
-    console.log('\n📊 RÉSUMÉ DES DONNÉES:');
-    console.log(`   - Utilisateurs: ${1 + commercants.length + 1} (1 admin, ${commercants.length} commerçants, 1 client)`);
-    console.log(`   - Boutiques: ${boutiques.length} (7 occupées, 3 libres)`);
-    console.log(`   - Loyers: ${loyersCreated.length} (4 à jour, 2 en retard, 1 résilié)`);
-    console.log(`   - Paiements: ${paiements.length} (période: -3 mois à +3 mois)`);
-    console.log(`   - Employés: ${employes.length}`);
-    console.log('\n💰 SCÉNARIOS DE PAIEMENT:');
-    console.log(`   ✅ Fashion Store & Cosmétique: Payés en AVANCE (jusqu'à +3 mois)`);
-    console.log(`   ✅ Tech World & Alimentation Bio: À JOUR (payé jusqu'à aujourd'hui)`);
-    console.log(`   ⚠️  Restaurant Le Bon Goût: RETARD 2 mois (1,600,000 Ar)`);
-    console.log(`   ⚠️  Sport Plus: RETARD 1 mois (450,000 Ar)`);
-    console.log(`   ❌ Librairie: Contrat RÉSILIÉ`);
-    console.log(`   - TOTAL RETARDS: 2,050,000 Ar`);
-    console.log('\n📝 Test Accounts:');
-    console.log('   Admin: admin@centre.mg / admin123');
-    console.log('   Commerçant (en avance): jean.rakoto@centre.mg / password123');
-    console.log('   Commerçant (retard 2 mois): sophie.ranaivo@centre.mg / password123');
-    console.log('   Commerçant (retard 1 mois): lucas.raharison@centre.mg / password123');
-    console.log('   Client: client@centre.mg / client123');
+    console.log('\n--- Database seeding completed ---');
+    console.log('\nTest Accounts:');
+    console.log('  Admin: admin@centre.mg / admin123');
+    console.log('  Commercant: jean.rakoto@centre.mg / password123');
+    console.log('  Commercant (retard): sophie.ranaivo@centre.mg / password123');
+    console.log('  Client: client@centre.mg / client123');
 
   } catch (error) {
-    console.error('❌ Error seeding database:', error);
+    console.error('Error seeding database:', error);
   } finally {
     await mongoose.connection.close();
-    console.log('✅ Database connection closed');
   }
 }
 
 seedDatabase();
-

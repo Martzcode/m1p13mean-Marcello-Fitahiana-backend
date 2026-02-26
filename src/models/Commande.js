@@ -58,7 +58,7 @@ const commandeSchema = new mongoose.Schema({
   },
   statut: {
     type: String,
-    enum: ['nouvelle', 'confirmee', 'en_preparation', 'prete', 'livree', 'annulee'],
+    enum: ['nouvelle', 'en_cours', 'terminee', 'livree'],
     default: 'nouvelle',
     index: true
   },

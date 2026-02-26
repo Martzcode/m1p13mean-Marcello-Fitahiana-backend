@@ -81,21 +81,29 @@ exports.createLoyer = async (req, res) => {
   try {
     const { boutique, commercant, montant, periodicite, dateDebut, dateFin } = req.body;
 
-    // Verify boutique and commercant exist
+    // Verify boutique exists
     const boutiqueDoc = await Boutique.findById(boutique);
-    const commercantDoc = await User.findById(commercant);
 
-    if (!boutiqueDoc || !commercantDoc) {
+    if (!boutiqueDoc) {
       return res.status(404).json({
         success: false,
-        message: 'Boutique ou commerçant non trouvé'
+        message: 'Boutique non trouvée'
       });
     }
 
-    if (commercantDoc.role !== 'commerçant') {
+    // Verify commercant exists
+    if (!commercant) {
       return res.status(400).json({
         success: false,
-        message: 'L\'utilisateur doit être un commerçant'
+        message: 'Veuillez sélectionner un commerçant'
+      });
+    }
+
+    const commercantDoc = await User.findById(commercant);
+    if (!commercantDoc || commercantDoc.role !== 'commerçant') {
+      return res.status(400).json({
+        success: false,
+        message: 'Commerçant non trouvé ou invalide'
       });
     }
 
@@ -106,6 +114,17 @@ exports.createLoyer = async (req, res) => {
       periodicite,
       dateDebut,
       dateFin
+    });
+
+    // Mettre à jour le statut de la boutique → occupée
+    await Boutique.findByIdAndUpdate(boutique, {
+      statut: 'occupée',
+      commercant: commercant
+    });
+
+    // Ajouter la boutique au commerçant si pas déjà présente
+    await User.findByIdAndUpdate(commercant, {
+      $addToSet: { boutiques: boutique }
     });
 
     res.status(201).json({
@@ -125,15 +144,41 @@ exports.createLoyer = async (req, res) => {
 // @access  Private/Admin
 exports.updateLoyer = async (req, res) => {
   try {
+    // Récupérer l'ancien loyer pour comparer le statut
+    const oldLoyer = await Loyer.findById(req.params.id);
+
+    if (!oldLoyer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Loyer non trouvé'
+      });
+    }
+
     const loyer = await Loyer.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
     });
 
-    if (!loyer) {
-      return res.status(404).json({
-        success: false,
-        message: 'Loyer non trouvé'
+    // Si le statut passe de actif → résilié/expiré, libérer la boutique
+    if (oldLoyer.statut === 'actif' && req.body.statut && req.body.statut !== 'actif') {
+      await Boutique.findByIdAndUpdate(oldLoyer.boutique, {
+        statut: 'libre',
+        $unset: { commercant: '' }
+      });
+      // Retirer la boutique du commerçant
+      await User.findByIdAndUpdate(oldLoyer.commercant, {
+        $pull: { boutiques: oldLoyer.boutique }
+      });
+    }
+
+    // Si le statut passe de résilié/expiré → actif, occuper la boutique
+    if (oldLoyer.statut !== 'actif' && req.body.statut === 'actif') {
+      await Boutique.findByIdAndUpdate(oldLoyer.boutique, {
+        statut: 'occupée',
+        commercant: oldLoyer.commercant
+      });
+      await User.findByIdAndUpdate(oldLoyer.commercant, {
+        $addToSet: { boutiques: oldLoyer.boutique }
       });
     }
 
@@ -160,6 +205,18 @@ exports.deleteLoyer = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Loyer non trouvé'
+      });
+    }
+
+    // Si le loyer supprimé était actif, libérer la boutique
+    if (loyer.statut === 'actif') {
+      await Boutique.findByIdAndUpdate(loyer.boutique, {
+        statut: 'libre',
+        $unset: { commercant: '' }
+      });
+      // Retirer la boutique du commerçant
+      await User.findByIdAndUpdate(loyer.commercant, {
+        $pull: { boutiques: loyer.boutique }
       });
     }
 
