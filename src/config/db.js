@@ -8,7 +8,8 @@ const connectDB = async () => {
     }
 
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000 // Fails fast if unable to reach database (e.g., due to IP whitelist firewall)
+      serverSelectionTimeoutMS: 5000, // Fails fast if unable to reach database
+      family: 4 // Force IPv4 to avoid IPv6 routing issues on certain environments like Vercel/Node
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     console.log(`Database: ${conn.connection.name}`);
