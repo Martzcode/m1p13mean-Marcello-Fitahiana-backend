@@ -10,6 +10,17 @@ const path = require('path');
 dotenv.config();
 
 const app = express();
+const connectDB = require('./config/db');
+
+// Ensure database connection for Serverless environments (like Vercel)
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        next(err);
+    }
+});
 
 // Middlewares
 app.use(helmet()); // Security headers
@@ -30,6 +41,26 @@ app.get('/', (req, res) => {
     res.json({
         message: 'API Centre Commercial - MEAN Stack',
         version: '1.0.0'
+    });
+});
+
+app.get('/api/v1/health', (req, res) => {
+    const mongoose = require('mongoose');
+    const uri = process.env.MONGODB_URI || 'not-set';
+    const isUriConfigured = uri !== 'not-set';
+
+    // Mask password in URI
+    let maskedUri = uri;
+    if (isUriConfigured) {
+        maskedUri = uri.replace(/\/\/(.*):(.*)@/, '//***:***@');
+    }
+
+    res.json({
+        ok: true,
+        dbStatus: mongoose.connection.readyState,
+        hasEnvVar: isUriConfigured,
+        maskedUri: maskedUri,
+        nodeVersion: process.version
     });
 });
 

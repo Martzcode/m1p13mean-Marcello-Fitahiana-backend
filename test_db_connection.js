@@ -1,16 +1,26 @@
-const mongoose = require('mongoose');
+const { MongoClient } = require('mongodb');
 
 async function testConnection() {
-    const uri = 'mongodb://mean_db_user:dKPNvNFuqIuXjYs7@ac-okw31wf-shard-00-00.byfajqp.mongodb.net:27017,ac-okw31wf-shard-00-01.byfajqp.mongodb.net:27017,ac-okw31wf-shard-00-02.byfajqp.mongodb.net:27017/centrecommercial?replicaSet=atlas-okw31wf-shard-0&ssl=true&authSource=admin';
+    const uri = 'mongodb+srv://mean_db_user:dKPNvNFuqIuXjYs7@mean-cluster.byfajqp.mongodb.net/centrecommercial?appName=mean-cluster';
+    const client = new MongoClient(uri, {
+        serverSelectionTimeoutMS: 5000,
+        family: 4
+    });
+
     try {
-        console.log('Attempting to connect to MongoDB Atlas...');
-        await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000, family: 4 });
-        console.log('SUCCESS: Connected to database');
-        process.exit(0);
+        console.log('Attempting to connect via pure MongoClient...');
+        await client.connect();
+        console.log('SUCCESS: Connected to MongoDB Atlas!');
+
+        const db = client.db('test');
+        const collections = await db.listCollections().toArray();
+        console.log('Collections:', collections.map(c => c.name));
+
     } catch (error) {
         console.error('FAILED to connect:');
         console.error(error);
-        process.exit(1);
+    } finally {
+        await client.close();
     }
 }
 
