@@ -14,7 +14,7 @@ const app = express();
 // Middlewares
 app.use(helmet()); // Security headers
 app.use(cors({
-    origin: ['http://localhost', 'http://localhost:4200', 'http://localhost:80'],
+    origin: ['http://localhost', 'http://localhost:4200', 'http://localhost:80', 'https://m1p13mean-marcello-fitahiana-fronte.vercel.app'],
     credentials: true
 })); // Enable CORS for the Angular frontend
 app.use(morgan('dev')); // Logging
